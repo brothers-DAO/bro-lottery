@@ -63,10 +63,10 @@ Seed = Internal Seed ⊕ External Seed
 Internal Seed is:
 Blake2( *TXIDn* || Blake2( *TXIDn-1* || ( Blake2 (*TXIDn-2* || ........*TXID_init*)))) 
 
-Where *TXIDn* is the transaction where the Ticket n was been 
+Where *TXIDn* is the TXid of the transaction where the Ticket n was bought.
 
 External Seed is:
-The SHA256 bash of the **FIRST** Bitcoin block which meets the following conditions:
+The SHA256 hash of the **FIRST** Bitcoin block which meets the following conditions:
   - Block height >= Target Height
   - Block Timestamp >= Target Timestamp
   - Confirmed by at least another block.
@@ -88,7 +88,7 @@ The Smart contracts draws 10 potential winning tickets:
 
 (N being the total number of tickets)
 
-After removing duplicates, the 3 firsts tickets are designed as the 1st, 2nd and 3rd prize. This method prevents a single ticket for winning several prizes.
+After removing duplicates, the 3 first tickets are designed as the 1st, 2nd and 3rd prize. This method prevents a single ticket for winning several prizes.
 
 Star Number = Blake2(Seed || "S") modulo 10
 
