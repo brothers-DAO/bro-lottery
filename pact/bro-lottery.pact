@@ -101,7 +101,7 @@
   ;   - STARTING => Before the start-date (transient state)
   ;   - RUNNING => Between start-date and end-date (Tickets can be sold)
   ;   - ENDED => Tickets sales are ended, we are waiting for a BTC Block that meets pre-conditions
-  ;   - SETTLED => The (settle) function has been called, TICKET-SALES has been done.
+  ;   - SETTLED => The (settle) function has been called, prizes payment have been done.
     (defun round-state:string ()
       @doc "Returns the Round state"
       (bind (current-round) {'start-time:=start-time, 'end-time:=end-time, 'settlement-tx:=settled}
@@ -283,7 +283,8 @@
     (enforce-round-state "RUNNING")
     ; Star Number validity
     (enforce-star-number-valid star-number)
-    ; We have to be sure that we will have no issue for TICKET-SALES
+    ; We have to be sure that we will have no issue for paying the prizes with
+    ; a mssing account.
     (enforce-bro-account-exists account)
 
     (bind (current-round) {'id:=round-id,
