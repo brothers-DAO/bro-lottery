@@ -1,0 +1,138 @@
+(load "init-lottery.repl")
+(load "init-helpers.repl")
+
+; Fund basic token accounts
+; Basic is a single fungible to test the ticket sales from any fungible
+(begin-tx)
+(load "stubs/basic-token.pact")
+(env-data {'a-ks:["alice-key"], 'c-ks:["carol-key"]})
+(basic.mint "alice" (read-keyset 'a-ks) 20000.0)
+(basic.mint "carol" (read-keyset 'c-ks) 20000.0)
+(commit-tx)
+
+(env-exec-config ["DisableRuntimeReturnTypeChecking"])
+(begin-tx)
+(DEX_NS.exchange.create-pair coin BRO_NS.bro "")
+(DEX_NS.exchange.create-pair coin basic"")
+(commit-tx)
+(env-exec-config)
+
+(begin-tx)
+(env-data {'ks:["carol-key"]})
+(env-sigs [{'key:"carol-key", 'caps:[(BRO_NS.bro.TRANSFER "carol" "VQqOeOhWJre-_4BFUk6aHr3Hf6hwgAwl_gFGf6S5iYo" 10.0),
+                                     (coin.TRANSFER "carol" "VQqOeOhWJre-_4BFUk6aHr3Hf6hwgAwl_gFGf6S5iYo" 100.0),
+                                     (basic.TRANSFER "carol" "yPBv-2ir9UX1h4gV9rSdbHEcL5oYk-nJvaOGqgEhZkc" 10000.0),
+                                     (coin.TRANSFER "carol" "yPBv-2ir9UX1h4gV9rSdbHEcL5oYk-nJvaOGqgEhZkc" 500.0)
+                                      ]}])
+
+; 1 $BRO is worth 10 KDA
+(DEX_NS.exchange.add-liquidity BRO_NS.bro coin 10.0 100.0 0.0 0.0 "carol" "carol" (read-keyset 'ks))
+
+; 1 KDA is worth 20 $BASIC
+(DEX_NS.exchange.add-liquidity basic coin 10000.0 500.0 0.0 0.0 "carol" "carol" (read-keyset 'ks))
+(commit-tx)
+
+(begin-tx)
+(use bro_lottery_mod)
+(env-hash (hash "Create Round Transaction"))
+(env-chain-data {'block-time: (time "2024-06-01T00:00:00Z")})
+; Before round creation, tickets cannot be bought
+(expect "No tickets for now" false (bro_lottery_helpers_mod.tickets-for-sale))
+
+; Create a round for 7 days
+(env-sigs [{'key:"op", 'caps:[(bro_lottery_mod.CREATE-ROUND)]}])
+(create-round 0.1 100 (time "2024-06-08T00:00:00Z") )
+(print (format "Current Round ID: {}" [(at 'id (current-round))]))
+
+(expect "Round State in starting" "STARTING" (round-state))
+
+(expect "Ticket price = 0.1" 0.1 (ticket-price))
+
+(commit-tx)
+
+
+(begin-tx)
+(use bro_lottery_helpers_mod)
+; Buy in $BRO
+(env-chain-data {'block-time: (time "2024-06-02T00:00:00Z")})
+
+(expect "Tickets available" true (bro_lottery_helpers_mod.tickets-for-sale))
+(env-sigs [{'key:"alice-key", 'caps:[(BRO_NS.bro.TRANSFER "alice" (sales-account-in-bro) (ticket-price-in-bro))]}])
+
+(buy-ticket-in-bro "alice" 5)
+
+; Verify the ticket
+(expect-that "Ticket 0 account" (compose (at 'account) (= "alice")) (bro_lottery_mod.get-ticket "024Cy43n" 0))
+
+(commit-tx)
+
+
+(begin-tx)
+(use bro_lottery_helpers_mod)
+(env-chain-data {'block-time: (time "2024-06-03T00:00:00Z")})
+
+; Buy tickets in batch: 20
+(env-sigs [{'key:"alice-key", 'caps:[(BRO_NS.bro.TRANSFER "alice" (sales-account-in-bro) (* 20.0 (ticket-price-in-bro)))]}])
+
+(buy-ticket-in-bro-batch "alice" 20 [0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9])
+
+(expect-that "get-all-ticket should return 21 elements" (compose (length) (= 21)) (bro_lottery_mod.get-all-tickets "024Cy43n"))
+
+; Check a couple of tickets
+(expect-that "Ticket 1 star-number" (compose (at 'star-number) (= 0)) (bro_lottery_mod.get-ticket "024Cy43n" 1))
+(expect-that "Ticket 19 star-number" (compose (at 'star-number) (= 8)) (bro_lottery_mod.get-ticket "024Cy43n" 19))
+(expect-that "Ticket 20 star-number" (compose (at 'star-number) (= 9)) (bro_lottery_mod.get-ticket "024Cy43n" 20))
+(commit-tx)
+
+; Buy a ticket in KDA
+(begin-tx)
+(use free.util-math)
+(use bro_lottery_helpers_mod)
+(env-chain-data {'block-time: (time "2024-06-04T00:00:00Z")})
+
+(print (format "Ticket price in KDA:{}" [(ticket-price-in-kda)]))
+(print (format "Sales account in KDA:{}" [(sales-account-in-kda)]))
+(expect-that "Ticket price between 1.0 and 1.1" (between 1.0 1.1) (ticket-price-in-kda))
+
+
+(env-sigs [{'key:"alice-key", 'caps:[(coin.TRANSFER "alice" (sales-account-in-kda) (ticket-price-in-kda))]}])
+
+;Check with a too low max-amount
+(expect-failure "Max-amount too low" "excessive input amount" (buy-ticket-in-kda "alice" 0.5 4))
+
+; Now OK
+(buy-ticket-in-kda "alice" 2.0 4)
+; Check the ticket
+(expect-that "Ticket 21 star-number" (compose (at 'star-number) (= 4)) (bro_lottery_mod.get-ticket "024Cy43n" 21))
+
+; Check Alice acount
+(expect-that "Alice account should be a little bit less than 999.0" (between 998.5 999.0) (coin.get-balance "alice"))
+
+(commit-tx)
+
+; Buy a ticket in Basic
+(begin-tx)
+(use free.util-math)
+(use bro_lottery_helpers_mod)
+(env-chain-data {'block-time: (time "2024-06-05T00:00:00Z")})
+
+(print (format "Ticket price in Basic:{}" [(ticket-price-in-fungible basic)]))
+(print (format "Sales account in Baisc:{}" [(sales-account-in-fungible basic)]))
+(expect-that "Ticket price between 20.0 and 20.5" (between 20.0 21.0) (ticket-price-in-fungible basic))
+
+
+(env-sigs [{'key:"alice-key", 'caps:[(basic.TRANSFER "alice" (sales-account-in-fungible basic) (ticket-price-in-fungible basic))]}])
+
+;Check with a too low max-amount
+(expect-failure "Max-amount too low" "excessive input amount" (buy-ticket-in-fungible basic "alice" 0.5 8))
+
+; Now OK
+(buy-ticket-in-fungible basic "alice" 21.0 8)
+
+; Check the ticket
+(expect-that "Ticket 21 star-number" (compose (at 'star-number) (= 8)) (bro_lottery_mod.get-ticket "024Cy43n" 22))
+
+; Check Alice acount
+(expect-that "Alice account should be a little bit less than 19980.0" (between 19979.0 19980.0) (basic.get-balance "alice"))
+
+(commit-tx)

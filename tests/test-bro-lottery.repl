@@ -1,0 +1,238 @@
+(load "init-lottery.repl")
+
+
+(begin-tx)
+(use bro_lottery_mod)
+(env-hash (hash "Create Round Transaction"))
+(env-chain-data {'block-time: (time "2024-06-01T00:00:00Z")})
+
+(expect-failure "Without the OP signature" "Keyset failure" (create-round 0.1 100 (time "2024-06-08T00:00:00Z")))
+
+(expect-failure "Invalid price" "Ticket price invalid" (create-round -0.1 100 (time "2024-06-08T00:00:00Z") ))
+(expect-failure "Invalid end date " "End time invalid" (create-round 0.1 100 (time "2023-06-08T00:00:00Z")))
+(expect-failure "Invalid end date " "End time invalid" (create-round 0.1 100 (time "2213-06-08T00:00:00Z")))
+
+(env-sigs [{'key:"op", 'caps:[(bro_lottery_mod.CREATE-ROUND)]}])
+; Create a round for 7 days
+(create-round 0.1 100 (time "2024-06-08T00:00:00Z") )
+(print (format "Current Round ID: {}" [(at 'id (current-round))]))
+
+(expect "Round State in starting" "STARTING" (round-state))
+
+(expect "Ticket price = 0.1" 0.1 (ticket-price))
+
+(commit-tx)
+
+
+; Alice buy 5 tickets
+(begin-tx)
+(use bro_lottery_mod)
+(env-hash (hash "Alice Buy"))
+(env-chain-data {'block-time: (time "2024-06-02T00:00:00Z")})
+
+(expect "Round State in running" "RUNNING" (round-state))
+
+(env-sigs [{'key:"alice-key", 'caps:[(BRO_NS.bro.TRANSFER "alice" TICKET-SALES-ACCOUNT 0.5)]}])
+(BRO_NS.bro.transfer "alice" TICKET-SALES-ACCOUNT 0.5)
+
+; Test an invalid account
+(expect-failure  "Invalid account" "doesn't exist in the BRO contract" (buy-ticket "unknown" 5))
+; Test an invalid star number
+(expect-failure  "Invalid Star Number" "Invalid Star Number" (buy-ticket "alice" 35))
+
+(buy-ticket "alice" 5) ; Ticket 0
+(buy-ticket "alice" 4) ; Ticket 1
+(buy-ticket "alice" 3) ; Ticket 2
+(buy-ticket "alice" 2) ; Ticket 3
+(buy-ticket "alice" 1) ; Ticket 4
+
+; Check a couple of tickets
+(expect-that "Ticket 0 account" (compose (at 'account) (= "alice")) (get-ticket "024Cy43n" 0))
+(expect-that "Ticket 1 account" (compose (at 'account) (= "alice")) (get-ticket "024Cy43n" 1))
+(expect-that "Ticket 1 star number" (compose (at 'star-number) (= 4)) (get-ticket "024Cy43n" 1))
+
+(commit-tx)
+
+;Bob buy 5 tickets
+(begin-tx)
+(use bro_lottery_mod)
+(env-hash (hash "Bob Buy"))
+(env-chain-data {'block-time: (time "2024-06-03T00:00:00Z")})
+
+(env-sigs [{'key:"bob-key", 'caps:[(BRO_NS.bro.TRANSFER "bob" TICKET-SALES-ACCOUNT 0.5)]}])
+(BRO_NS.bro.transfer "bob" TICKET-SALES-ACCOUNT 0.5)
+(buy-ticket "bob" 8) ; Ticket 5
+(buy-ticket "bob" 9) ; Ticket 6
+(buy-ticket "bob" 1) ; Ticket 7
+(buy-ticket "bob" 0) ; Ticket 8
+(buy-ticket "bob" 9) ; Ticket 9
+
+; Check a couple of tickets
+(expect-that "Ticket 5 account" (compose (at 'account) (= "bob")) (get-ticket "024Cy43n" 5))
+(expect-that "Ticket 6 account" (compose (at 'account) (= "bob")) (get-ticket "024Cy43n" 6))
+(expect-that "Ticket 6 star number" (compose (at 'star-number) (= 9)) (get-ticket "024Cy43n" 6))
+
+
+(commit-tx)
+
+;Carol buy 3 tickets
+(begin-tx)
+(use bro_lottery_mod)
+(env-hash (hash "Carol Buy"))
+(env-chain-data {'block-time: (time "2024-06-04T00:00:00Z")})
+
+(env-sigs [{'key:"carol-key", 'caps:[(BRO_NS.bro.TRANSFER "carol" TICKET-SALES-ACCOUNT 0.3)]}])
+(BRO_NS.bro.transfer "carol" TICKET-SALES-ACCOUNT 0.3)
+(buy-ticket "carol" 8) ; Ticket 10
+(buy-ticket "carol" 9) ; Ticket 11
+(buy-ticket "carol" 1) ; Ticket 12
+(commit-tx)
+
+
+(begin-tx)
+(use bro_lottery_mod)
+(use BRO_NS.bro)
+(print "Current Round state:")
+(print (current-round))
+
+; We check all balances here:
+(expect "Alice Balance 10.0 - 5 * 0.1 " 9.5 (get-balance "alice"))
+(expect "Bob Balance 10.0 - 5 * 0.1 " 9.5 (get-balance "bob"))
+(expect "Carol Balance 10.0 - 3 * 0.3 " 9.7 (get-balance "carol"))
+
+(expect "Payment Account should be empty" 0.0 (get-balance TICKET-SALES-ACCOUNT))
+(expect "Main Pool shoumd be 13 * 0.1 *0.9" 1.17 (get-balance (round-account "024Cy43n" )))
+(expect "Jackpot pool should be 13 * 0.1 *0.1" 0.13 (get-balance JACKPOT-ACCOUNT))
+
+; Good place to check that get-all-tickets works
+(expect-that "get-all-ticket should return 13 elements" (compose (length) (= 13)) (get-all-tickets "024Cy43n"))
+
+(commit-tx)
+
+
+(begin-tx)
+(use bro_lottery_mod)
+(use BRO_NS.bro)
+(env-chain-data {'block-time: (time "2024-06-08T01:00:00Z")})
+(expect "Round State in ended" "ENDED" (round-state))
+
+(settle-round)
+(print (get-result "024Cy43n"))
+; Winner are Ticket 4, 8 and 5
+; Star number = 4
+; First Price Alice with Star =1 => No jackpot
+(expect "Alice Balance 9.5 + 1.17 *0.5" 10.085 (get-balance "alice"))
+; Second and third price Biob
+(expect "Bob Balance 9.5 + 1.17 * 0.25 + 1.17 *0.15" 9.968 (get-balance "bob"))
+
+; Fees account
+(expect "Fees balance 1.17 * 0.05" 0.0585 (get-balance "FEE_ACCOUNT"))
+
+; Community account
+(expect "Community balance 1.17 * 0.05" 0.0585 (get-balance "r:BRO_NS.community"))
+
+; Main pool
+(expect "Main Pool Empty" 0.0 (get-balance (round-account "024Cy43n")))
+
+; Jackpot
+(expect "No Jackpot during this play" 0.13 (get-balance JACKPOT-ACCOUNT))
+
+(expect "Round State in settled" "SETTLED" (round-state))
+
+(commit-tx)
+
+
+; Start a new lottery
+(begin-tx)
+(use bro_lottery_mod)
+(env-hash (hash "Create Round Transaction 2"))
+(env-chain-data {'block-time: (time "2024-06-09T00:00:00Z")})
+
+; Create a round for 7 days
+(env-sigs [{'key:"op", 'caps:[(bro_lottery_mod.CREATE-ROUND)]}])
+(create-round 0.1 100 (time "2024-06-17T00:00:00Z") )
+(print (format "Current Round ID: {}" [(at 'id (current-round))]))
+
+(expect "Round State in starting" "STARTING" (round-state))
+(commit-tx)
+
+;Carol buy 10 tickets
+(begin-tx)
+(use bro_lottery_mod)
+(env-hash (hash "Carol Buy G"))
+(env-chain-data {'block-time: (time "2024-06-10T00:00:00Z")})
+
+(env-sigs [{'key:"carol-key", 'caps:[(BRO_NS.bro.TRANSFER "carol" TICKET-SALES-ACCOUNT 1.0)]}])
+(BRO_NS.bro.transfer "carol" TICKET-SALES-ACCOUNT 1.0)
+(buy-ticket "carol" 8) ; Ticket 0
+(buy-ticket "carol" 9) ; Ticket 1
+(buy-ticket "carol" 1) ; Ticket 2
+(buy-ticket "carol" 8) ; Ticket 3
+(buy-ticket "carol" 9) ; Ticket 4
+(buy-ticket "carol" 1) ; Ticket 5
+(buy-ticket "carol" 1) ; Ticket 6
+(buy-ticket "carol" 9) ; Ticket 7
+(buy-ticket "carol" 1) ; Ticket 8
+(buy-ticket "carol" 8) ; Ticket 9
+(commit-tx)
+
+(begin-tx)
+(use bro_lottery_mod)
+(use BRO_NS.bro)
+(print "Current Round state:")
+(print (current-round))
+
+; We check all balances here:
+(expect "Carol Balance 9.7 - 10 * 0.1 " 8.7 (get-balance "carol"))
+
+(expect "Payment Account should be empty" 0.0 (get-balance TICKET-SALES-ACCOUNT))
+(expect "Main Pool shoumd be 10 * 0.1 *0.9" 0.9 (get-balance (round-account "HPpz0cHP" )))
+(expect "Jackpot pool should be 0.13 +  10 * 0.1 *0.1" 0.23 (get-balance JACKPOT-ACCOUNT))
+
+; Good place to check that get-all-tickets works and doesn't mix rounds
+(expect-that "get-all-ticket should return 13 elements" (compose (length) (= 10)) (get-all-tickets "HPpz0cHP"))
+
+(commit-tx)
+
+
+(begin-tx)
+(use bro_lottery_mod)
+(use BRO_NS.bro)
+(env-chain-data {'block-time: (time "2024-06-17T01:00:00Z")})
+(expect "Round State in ended" "ENDED" (round-state))
+
+(settle-round)
+(print (get-result "HPpz0cHP"))
+; Note Transaction ID + Star numbers have been tweaked  to win the jackpot
+(expect-that "Star Number = 4" (compose (at 'star-number ) (= 1)) (get-result "HPpz0cHP"))
+(expect-that "Jackpot won" (compose (at 'jackpot-won ) (= true)) (get-result "HPpz0cHP"))
+
+; Carol won the 3 prizes + Jackport 0.8 *0.23
+(expect "Carol Balance 8.7 + 0.9 * (0.5 + 0.25 + 0.15) + 0.8 *0.23"  9.694 (get-balance "carol"))
+
+; Fees account
+(expect "Fees balance 0.0585 + 0.9 * 0.05 " 0.1035 (get-balance "FEE_ACCOUNT"))
+
+; Community account
+(expect "Community balance 0.0585 + 0.9 * 0.05" 0.1035 (get-balance "r:BRO_NS.community"))
+
+; Main pool
+(expect "Main Pool Empty" 0.0 (get-balance (round-account "HPpz0cHP")))
+
+; Jackpot
+(expect "20% of the Jackpot left 0.23 * 0.2 " 0.046 (get-balance JACKPOT-ACCOUNT))
+
+(expect "Round State in settled" "SETTLED" (round-state))
+(commit-tx)
+
+
+(begin-tx)
+(use bro_lottery_mod)
+(use BRO_NS.bro)
+; Test Jackpot withdrawal
+(env-sigs [{'key:"admin", 'caps:[(bro_lottery_mod.WITHDRAW-JACKPOT)]}])
+(withdraw-jackpot)
+
+(expect "Jackpot account is empty " 0.0 (get-balance JACKPOT-ACCOUNT))
+(expect "Community balance 0.1035 + 0.046" 0.1495 (get-balance "r:BRO_NS.community"))
+(commit-tx)

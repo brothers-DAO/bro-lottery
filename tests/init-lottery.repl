@@ -1,0 +1,44 @@
+(env-data {"disable-marmalade":true})
+(load "kadena_repl_sandbox/kda-env/init.repl")
+
+(begin-tx)
+(load "stubs/btc-oracle.pact")
+(commit-tx)
+
+(begin-tx)
+(define-namespace "BRO_NS" basic-guards.GUARD_SUCCESS basic-guards.GUARD_SUCCESS)
+(namespace "BRO_NS")
+(load "bro-token/pact/bro-token.pact")
+(create-table user-accounts-table)
+(create-table init-table)
+(commit-tx)
+
+(load "fund-bro-accounts.repl")
+
+(begin-tx)
+(define-namespace "LOTTERY_NS" basic-guards.GUARD_SUCCESS basic-guards.GUARD_SUCCESS)
+(namespace "LOTTERY_NS")
+(env-data {'ks-admin:["admin"], 'ks-op:["op"]})
+(define-keyset "LOTTERY_NS.admin" (read-keyset 'ks-admin))
+(define-keyset "LOTTERY_NS.op" (read-keyset 'ks-op))
+(commit-tx)
+
+(begin-tx)
+(load "../pact/bro-lottery.pact")
+(create-table result-table)
+(create-table round-table)
+(create-table current-table)
+(create-table loottery-ticket-table)
+(init)
+(commit-tx)
+
+(begin-tx)
+(env-data {'f-ks:["fee-key"], 'c-ks:["community-key"]})
+
+
+(namespace "BRO_NS")
+(bro.create-account "FEE_ACCOUNT" (read-keyset 'f-ks))
+(define-keyset "BRO_NS.community" (read-keyset 'c-ks))
+(bro.create-account (create-principal (keyset-ref-guard "BRO_NS.community")) (keyset-ref-guard "BRO_NS.community"))
+
+(commit-tx)

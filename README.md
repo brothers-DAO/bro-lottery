@@ -6,7 +6,7 @@ Draft : **Request for comments**
 
 The round duration is 7 days. Its not possible to buy a ticket after the end-date.
 
-Each participant buy a ticket, either: 
+Each participant buy a ticket, either:
    - 0.01 $BRO (10 GiDoug) **TBD**
    - The corresponding amount in KDA (swapped automatically on EckoDEX)
    - The corresponding amount in zUSD(swapped automatically on EckoDEX)
@@ -29,7 +29,7 @@ If the winner (1st prize) finds the right "Star number", he wins 80% of the Jack
 
 | ~                            | Main Prize Pool  | Jackpot pool              |
 |------------------------------|------------------|---------------------------|
-| 1st prize                    | 50 %             | 80 % if Star Number found | 
+| 1st prize                    | 50 %             | 80 % if Star Number found |
 | 2nd prize                    | 25 %             |                           |
 | 3rd prize                    | 15 %             |                           |
 | -> Community fund            |  5 %             |                           |
@@ -38,7 +38,7 @@ If the winner (1st prize) finds the right "Star number", he wins 80% of the Jack
 
 The Jackpot pool is initialized with 0.3 $BRO from the community fund.
 
-In case we stop the lottery, the remaining $BRO in the Jackpot pool will be transfered back to the community fund.
+In case we stop the lottery, the remaining $BRO in the Jackpot pool will be transferred back to the community fund.
 
 Anyway, we will try as much as possible, to keep new rounds running until someone wins the Jackpot.
 
@@ -47,7 +47,7 @@ Example for the first round in case of 200 tickets sold at 0.01 $BRO, and the fi
 
 | ~                            | Main Prize Pool  | Jackpot pool              |
 |------------------------------|------------------|---------------------------|
-| 1st prize                    | 0.95 $BRO        | 0.4 $BRO                  | 
+| 1st prize                    | 0.95 $BRO        | 0.4 $BRO                  |
 | 2nd prize                    | 0.4875 $BRO      |                           |
 | 3rd prize                    | 0.2925 $BRO      |                           |
 | -> Community fund            | 0.0975 $BRO      |                           |
@@ -61,7 +61,7 @@ The Draw Seed is defined as:
 Seed = Internal Seed ⊕ External Seed
 
 Internal Seed is:
-Blake2( *TXIDn* || Blake2( *TXIDn-1* || ( Blake2 (*TXIDn-2* || ........*TXID_init*)))) 
+Blake2( *TXIDn* || Blake2( *TXIDn-1* || ( Blake2 (*TXIDn-2* || ........*TXID_init*))))
 
 Where *TXIDn* is the TXid of the transaction where the Ticket n was bought.
 
@@ -73,24 +73,21 @@ The SHA256 hash of the **FIRST** Bitcoin block which meets the following conditi
 
 where:
    - Target Height = BTC Height at start-date + 1008 (number of blocks expected for 7 days)
-   - Target Timestamp = end-date + 2 hours 
+   - Target Timestamp = end-date + 2 hours
 
 ## Draw
-The Smart contracts draws 10 potential winning tickets:
+The Smart contracts draws 16 potential winning tickets:
 
-1st = Blake2(Seed || 1) modulo N
+1st = Blake2(Seed ⊕ 1) modulo N
 
-2nd = Blake2(Seed || 2) modulo N
+2nd = Blake2(Seed ⊕ 2) modulo N
 
 ...
 
-10st = Blake2(Seed || 10) modulo N
+16st = Blake2(Seed ⊕ 16) modulo N
 
 (N being the total number of tickets)
 
 After removing duplicates, the 3 first tickets are designed as the 1st, 2nd and 3rd prize. This method prevents a single ticket for winning several prizes.
 
-Star Number = Blake2(Seed || "S") modulo 10
-
-
-
+Star Number = Blake2(Seed ⊕ 888) modulo 10

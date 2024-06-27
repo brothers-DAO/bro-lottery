@@ -1,0 +1,5 @@
+(load "init-lottery.repl")
+(load "init-helpers.repl")
+
+(typecheck 'bro_lottery_mod)
+(typecheck 'bro_lottery_helpers_mod)

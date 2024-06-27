@@ -1,0 +1,15 @@
+[submodule "tests/kadena_repl_sandbox"]
+	path = tests/kadena_repl_sandbox
+	url = https://github.com/CryptoPascal31/kadena_repl_sandbox
+[submodule "pact-sha256"]
+	path = pact-sha256
+	url = https://github.com/CryptoPascal31/pact-sha256
+[submodule "kadena-btc-oracle"]
+	path = kadena-btc-oracle
+	url = https://github.com/CryptoPascal31/kadena-btc-oracle
+[submodule "tests/bro-token"]
+	path = tests/bro-token
+	url = https://github.com/brothers-DAO/bro-token
+[submodule "tests/ecko/smart-contracts"]
+	path = tests/ecko/smart-contracts
+	url = https://github.com/eckoDAO-org/smart-contracts
