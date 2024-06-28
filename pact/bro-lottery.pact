@@ -410,6 +410,7 @@
     (insert round-table "" NULL-ROUND)
     (create-account JACKPOT-ACCOUNT JACKPOT-GUARD)
     (create-account TICKET-SALES-ACCOUNT TICKET-SALES-GUARD)
+    "Init OK"
   )
 
   (defun withdraw-jackpot:string ()
