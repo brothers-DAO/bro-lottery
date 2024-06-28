@@ -7,7 +7,7 @@ Draft : **Request for comments**
 The round duration is 7 days. Its not possible to buy a ticket after the end-date.
 
 Each participant buy a ticket, either:
-   - 0.01 $BRO (10 GiDoug) **TBD**
+   - **TBD** per round. But probably at first 0.001 $BRO = 1 GiDoug
    - The corresponding amount in KDA (swapped automatically on EckoDEX)
    - The corresponding amount in zUSD(swapped automatically on EckoDEX)
 
