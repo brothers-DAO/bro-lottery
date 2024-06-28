@@ -91,7 +91,7 @@
     account:string ; Account to pay the winnings
     star-number:integer ; STAR Number choosen by the user
   )
-  (deftable loottery-ticket-table:{ticket})
+  (deftable ticket-table:{ticket})
 
   ;-----------------------------------------------------------------------------
   ; STATES MANAGEMENT
@@ -226,10 +226,10 @@
 
   (defun get-ticket:object{ticket} (round-id:string rank:integer)
     @doc "Return a ticket"
-    (read loottery-ticket-table (create-ticket-id round-id rank)))
+    (read ticket-table (create-ticket-id round-id rank)))
 
   (defun get-all-tickets:[object{ticket}] (round-id:string)
-    (sort ['rank] (select loottery-ticket-table (where 'round-id (= round-id))))
+    (sort ['rank] (select ticket-table (where 'round-id (= round-id))))
   )
 
   (defun ticket-price:decimal ()
@@ -305,7 +305,7 @@
         (transfer TICKET-SALES-ACCOUNT JACKPOT-ACCOUNT (* price JACKPOT-POOL-RATIO)))
 
       ; Create the ticket
-      (insert loottery-ticket-table (create-ticket-id round-id cnt)
+      (insert ticket-table (create-ticket-id round-id cnt)
         {'round-id:round-id,
          'rank:cnt,
          'account:account,

@@ -28,7 +28,7 @@
 (create-table result-table)
 (create-table round-table)
 (create-table current-table)
-(create-table loottery-ticket-table)
+(create-table ticket-table)
 (init)
 (commit-tx)
 
