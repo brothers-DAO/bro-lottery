@@ -340,6 +340,8 @@
 
   (defun compute-result:object{lottery-result} (in:object{lottery-round})
     @doc "Compute a result object from the round obejct"
+    ; We compute the seed + winning ticket + star number exactly as decribed in
+    ; the doc: compute-result
     (bind in {'id:=id,
               'inner-seed:=i-seed,
               'tickets-count:=cnt,
@@ -384,12 +386,18 @@
           (result:object{lottery-result} (compute-result (current-round))))
 
       (with-capability (ROUND-MAIN-POOL id)
+        ; We pay the 3 winners
         (zip (--do-payment id) (map (compose (get-ticket id) (at 'account)) (at 'winning-tickets result))
                                (map (* total) WINNINGS-RATIO))
+        ; We pay the 5% fees
         (--do-payment id FEE-ACCOUNT (* total FEE-RATIO))
 
+        ; We transfer all funds left in the pool to the community account.
+        ; Should be 5% + Dust coming from previous rounding errors.
         (--do-payment id COMMUNITY-ACCOUNT (get-balance (round-account id))))
 
+      ; We pay the Jackpot only if the jackpot-won flag has been set by the
+      ; (compute-result) function.
       (if (at 'jackpot-won result)
           (with-capability (JACKPOT-POOL)
             (--do-payment-jackpot (get-ticket id (first (at 'winning-tickets result)))))
