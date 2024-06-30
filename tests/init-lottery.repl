@@ -23,6 +23,16 @@
 (define-keyset "LOTTERY_NS.op" (read-keyset 'ks-op))
 (commit-tx)
 
+; Create relevant accounts before intializing the contract
+(begin-tx)
+(env-data {'f-ks:["fee-key"], 'c-ks:["community-key"]})
+(namespace "BRO_NS")
+(bro.create-account "FEE_ACCOUNT" (read-keyset 'f-ks))
+(define-keyset "BRO_NS.community" (read-keyset 'c-ks))
+(bro.create-account (create-principal (keyset-ref-guard "BRO_NS.community")) (keyset-ref-guard "BRO_NS.community"))
+(commit-tx)
+
+
 (begin-tx)
 (load "../pact/bro-lottery.pact")
 (create-table result-table)
@@ -30,15 +40,4 @@
 (create-table current-table)
 (create-table ticket-table)
 (init)
-(commit-tx)
-
-(begin-tx)
-(env-data {'f-ks:["fee-key"], 'c-ks:["community-key"]})
-
-
-(namespace "BRO_NS")
-(bro.create-account "FEE_ACCOUNT" (read-keyset 'f-ks))
-(define-keyset "BRO_NS.community" (read-keyset 'c-ks))
-(bro.create-account (create-principal (keyset-ref-guard "BRO_NS.community")) (keyset-ref-guard "BRO_NS.community"))
-
 (commit-tx)

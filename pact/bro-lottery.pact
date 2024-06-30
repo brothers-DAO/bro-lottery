@@ -418,6 +418,12 @@
     (insert round-table "" NULL-ROUND)
     (create-account JACKPOT-ACCOUNT JACKPOT-GUARD)
     (create-account TICKET-SALES-ACCOUNT TICKET-SALES-GUARD)
+
+    ; Check external accounts => I Don't want to have issues later for payments
+    (enforce-bro-account-exists JACKPOT-WITHDRAWAL-ACCOUNT)
+    (enforce-bro-account-exists FEE-ACCOUNT)
+    (enforce-bro-account-exists COMMUNITY-ACCOUNT)
+
     "Init OK"
   )
 
