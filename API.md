@@ -56,6 +56,72 @@ Before calling ```(buy-ticket)```, all the following pre-conditions MUST be met:
   - the ticket-price in $BRO must have previously sent to ```TICKET-SALES-ACCOUNT``` (for security it has to be done atomically: in the same transaction)
 
 
+## View functions (Core contract)
+Functions and date usable by a Frontend or another contract in Read-only mode:
+
+#### Round Object
+Each round is reference by a unique 8 bytes ID, computed at creation.
+
+```pact
+  (defschema lottery-round
+    id:string ; A 8 chars ID
+    start-time:time ; Start-time : only informative
+    end-time:time ; End-time: end of tickets sales
+    ticket-price:decimal ; Ticket price
+    tickets-count:integer ; Number of sold tickets, automatically incremented
+    tickets-limit:integer ; Limits of tickets being sold for this round
+    inner-seed:string ; Internal seed (see doc), automatically updated by each sale
+    btc-height:integer ; The minimum BTC height for retriving the external seed
+    settlement-tx:string ; Hash of th settlement TX: empty is not settled
+  )
+```
+
+#### Result object
+
+This object is created and stored when the round is settled.
+
+```pact
+(defschema lottery-result
+  inner-seed:integer ; Copy of the internal seed of the round
+  btc-height:integer ; BTC heigt used for the external seed
+  seed:integer ; Seed used for comupting the results (Internal seed XOR external seed)
+  star-number:integer ; Drawn STAR Number
+  winning-tickets:[integer] ; Drawn winning tickets
+  jackpot-won:bool ; Whether the Jackpot was won
+)
+```
+
+#### Ticket object
+```pact
+(defschema ticket
+  round-id:string ; Round-id linked to this ticket
+  rank:integer ; Rank of the ticket in the round
+  account:string ; Account to pay the winnings
+  star-number:integer ; STAR Number choosen by the user
+)
+```
+
+**Note:** A ticket has a rank number: automatically incremented and started from 0 for each round.
+The tuple *(round-id, rank)* represents an unique ticket.
+
+### Functions
+
+`(current-round-id)`: *-> string* : Return the current Round-ID
+
+`(current-round)`: *-> object{lottery-round}* : Return the current Round
+
+`(get-round id)`: *string -> object{lottery-round}* : Return the round object from an ID
+
+`(get-result id)`: *string -> object{lottery-result}* : Return the result object from a Round-ID
+
+`(get-ticket round-id rank)`: *string integer-> object{ticket}* : Return a ticket from a tuple *(round-id, rank)*
+
+`(get-all-tickets round-id)`: *string -> [object{ticket}]* : Return all tickets sold for a given Round-ID
+
+ `(round-state)`: *-> string*: Return the current round state : `"STARTING"`, `"RUNNING"`, `"ENDED"` or `"SETTLED"`
+
+
+
 
 
 
