@@ -236,3 +236,31 @@
 (expect "Jackpot account is empty " 0.0 (get-balance JACKPOT-ACCOUNT))
 (expect "Community balance 0.1035 + 0.046" 0.1495 (get-balance "r:BRO_NS.community"))
 (commit-tx)
+
+
+; We check the case of a ZERO tickets bought
+; ---------------------------------------------
+(begin-tx)
+(use bro_lottery_mod)
+(env-hash (hash "Create Round Transaction 3"))
+(env-chain-data {'block-time: (time "2024-06-22T00:00:00Z")})
+
+; Create a round for 7 days
+(env-sigs [{'key:"op", 'caps:[(bro_lottery_mod.CREATE-ROUND)]}])
+(create-round 0.1 100 (time "2024-06-29T00:00:00Z") )
+(print (format "Current Round ID: {}" [(at 'id (current-round))]))
+
+(expect "Round State in starting" "STARTING" (round-state))
+(commit-tx)
+
+; No tickets sold 7 days later
+(begin-tx)
+(use bro_lottery_mod)
+(env-hash (hash "Create Round Transaction 4"))
+(env-chain-data {'block-time: (time "2024-06-29T02:00:00Z")})
+(expect "Round State in settled" "SETTLED" (round-state))
+; We can create a new Round immediatlely
+
+(create-round 0.1 100 (time "2024-07-05T00:00:00Z") )
+(expect "Round State in starting" "STARTING" (round-state))
+(commit-tx)

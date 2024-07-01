@@ -102,11 +102,14 @@
   ;   - RUNNING => Between start-date and end-date (Tickets can be sold)
   ;   - ENDED => Tickets sales are ended, we are waiting for a BTC Block that meets pre-conditions
   ;   - SETTLED => The (settle) function has been called, prizes payment have been done.
+  ; Special case: when a round has ended without any ticket sold, we consider it as already SETTLED
     (defun round-state:string ()
       @doc "Returns the Round state"
-      (bind (current-round) {'start-time:=start-time, 'end-time:=end-time, 'settlement-tx:=settled}
+      (bind (current-round) {'start-time:=start-time, 'end-time:=end-time,
+                             'tickets-count:=cnt,'settlement-tx:=settled}
         (cond
           ((!= "" settled) "SETTLED")
+          ((and (= cnt 0) (is-past end-time)) "SETTLED")
           ((is-past end-time) "ENDED")
           ((is-past start-time) "RUNNING")
           "STARTING"))
