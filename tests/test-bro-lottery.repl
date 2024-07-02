@@ -272,3 +272,13 @@
 (create-round 0.1 100 (time "2024-07-05T00:00:00Z") )
 (expect "Round State in starting" "STARTING" (round-state))
 (commit-tx)
+
+; test the function Get-all-round
+(begin-tx)
+(use bro_lottery_mod)
+(use free.util-lists)
+(expect-that "4 rounds" (compose (length) (= 4)) (get-all-rounds))
+(expect-that "Reverse ordered rounds" (compose (compose (first) (at 'end-time)) (= (time "2024-07-05T00:00:00Z")))
+                                      (get-all-rounds))
+
+(commit-tx)

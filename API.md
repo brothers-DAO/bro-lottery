@@ -126,7 +126,7 @@ The tuple *(round-id, rank)* represents an unique ticket.
 
 `(jackpot-balance id)` *-> decimal*: Return the $BRO balance of the Jackpot
 
-
+`(get-all-rounds)` *-> [object{lottery-round}]*: Return all rounds (current and archives)
 
 
 

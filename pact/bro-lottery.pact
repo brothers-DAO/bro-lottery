@@ -230,6 +230,14 @@
     @doc "Return the round for a given ID"
     (read round-table id))
 
+  (defun get-all-rounds:[object{lottery-round}] ()
+    @doc "Return all rounds (current and archives)"
+    ; Note: We have to filter the intial null round
+    (reverse
+      (sort ['start-time]
+            (select round-table (where 'id (!= "")))))
+  )
+
   (defun get-result:object{lottery-result} (id:string)
     @doc "Return the result of a round: Only for already settled round"
     (read result-table id))
