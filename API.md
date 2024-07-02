@@ -81,14 +81,16 @@ Each round is reference by a unique 8 bytes ID, computed at creation.
 This object is created and stored when the round is settled.
 
 ```pact
-(defschema lottery-result
-  inner-seed:integer ; Copy of the internal seed of the round
-  btc-height:integer ; BTC heigt used for the external seed
-  seed:integer ; Seed used for comupting the results (Internal seed XOR external seed)
-  star-number:integer ; Drawn STAR Number
-  winning-tickets:[integer] ; Drawn winning tickets
-  jackpot-won:bool ; Whether the Jackpot was won
-)
+  (defschema lottery-result
+    inner-seed:integer ; Copy of the internal seed of the round
+    btc-height:integer ; BTC heigt used for the external seed
+    seed:integer ; Seed used for comupting the results (Internal seed XOR external seed)
+    star-number:integer ; Drawn STAR Number
+    winning-tickets:[integer] ; Drawn winning tickets
+    final-round-bal:decimal ; Final balance of the main pool
+    final-jackpot-bal:decimal ; Final Jackpot balance
+    jackpot-won:bool ; Whether the Jackpot was won
+  )
 ```
 
 #### Ticket object
@@ -118,8 +120,11 @@ The tuple *(round-id, rank)* represents an unique ticket.
 
 `(get-all-tickets round-id)`: *string -> [object{ticket}]* : Return all tickets sold for a given Round-ID
 
- `(round-state)`: *-> string*: Return the current round state : `"STARTING"`, `"RUNNING"`, `"ENDED"` or `"SETTLED"`
+`(round-state)`: *-> string*: Return the current round state : `"STARTING"`, `"RUNNING"`, `"ENDED"` or `"SETTLED"`
 
+`(round-balance id)` *string -> decimal*: Return the $BRO balance of the prize pool for a round ID
+
+`(jackpot-balance id)` *-> decimal*: Return the $BRO balance of the Jackpot
 
 
 

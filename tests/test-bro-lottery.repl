@@ -121,6 +121,14 @@
 ; Winner are Ticket 4, 8 and 5
 ; Star number = 4
 ; First Price Alice with Star =1 => No jackpot
+
+; Check some values of the result
+(expect-that "Winning tickets are 4 8 5" (compose (at 'winning-tickets) (= [ 4 8 5])) (get-result "024Cy43n"))
+
+(expect-that "Final Jakpot balance is 0.13" (compose (at 'final-jackpot-bal) (= 0.13)) (get-result "024Cy43n"))
+
+(expect-that "Final prize pool balance" (compose (at 'final-round-bal) (= 1.17)) (get-result "024Cy43n"))
+
 (expect "Alice Balance 9.5 + 1.17 *0.5" 10.085 (get-balance "alice"))
 ; Second and third price Biob
 (expect "Bob Balance 9.5 + 1.17 * 0.25 + 1.17 *0.15" 9.968 (get-balance "bob"))

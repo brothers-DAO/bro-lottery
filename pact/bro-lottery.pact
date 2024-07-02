@@ -73,6 +73,8 @@
     seed:integer ; Seed used for comupting the results (Internal seed XOR external seed)
     star-number:integer ; Drawn STAR Number
     winning-tickets:[integer] ; Drawn winning tickets
+    final-round-bal:decimal ; Final balance of the main pool
+    final-jackpot-bal:decimal ; Final Jackpot balance
     jackpot-won:bool ; Whether the Jackpot was won
   )
 
@@ -175,6 +177,9 @@
 
   (defconst JACKPOT-ACCOUNT (create-principal JACKPOT-GUARD))
 
+  (defun jackpot-balance:decimal ()
+    (get-balance JACKPOT-ACCOUNT))
+
   ; --------
   ; Account dedicated to a lottery round
   (defcap ROUND-MAIN-POOL:bool (id:string)
@@ -186,6 +191,8 @@
   (defun round-account:string (id:string)
     (create-principal (round-guard id)))
 
+  (defun round-balance:decimal (id:string)
+    (get-balance (round-account id)))
 
   ;-----------------------------------------------------------------------------
   ; UTILS (for internal use)
@@ -361,6 +368,8 @@
            'seed:seed,
            'star-number:star,
            'winning-tickets:winning-tickets,
+           'final-round-bal: (round-balance id),
+           'final-jackpot-bal: (jackpot-balance),
            'jackpot-won: (= star (at 'star-number (get-ticket id (first winning-tickets))))
           })))
   )
@@ -377,34 +386,34 @@
   (defun --do-payment-jackpot:bool (ticket:object{ticket})
     (install-capability (TRANSFER JACKPOT-ACCOUNT (at 'account ticket) 100.0))
     (transfer JACKPOT-ACCOUNT (at 'account ticket)
-              (floor (* JACKPOT-WIN-RATIO (get-balance JACKPOT-ACCOUNT)) 12))
+              (floor (* JACKPOT-WIN-RATIO (jackpot-balance)) 12))
     true
   )
 
   (defun settle-round:string ()
     (enforce-round-state "ENDED")
 
-    (let* ((id (current-round-id))
-          (total (get-balance (round-account id)))
+    (let ((id (current-round-id))
           (result:object{lottery-result} (compute-result (current-round))))
+      (bind result {'winning-tickets:=winning-tickets, 'final-round-bal:=total, 'jackpot-won:=jackpot-won}
 
-      (with-capability (ROUND-MAIN-POOL id)
-        ; We pay the 3 winners
-        (zip (--do-payment id) (map (compose (get-ticket id) (at 'account)) (at 'winning-tickets result))
-                               (map (* total) WINNINGS-RATIO))
-        ; We pay the 5% fees
-        (--do-payment id FEE-ACCOUNT (* total FEE-RATIO))
+        (with-capability (ROUND-MAIN-POOL id)
+          ; We pay the 3 winners
+          (zip (--do-payment id) (map (compose (get-ticket id) (at 'account)) winning-tickets)
+                                 (map (* total) WINNINGS-RATIO))
+          ; We pay the 5% fees
+          (--do-payment id FEE-ACCOUNT (* total FEE-RATIO))
 
-        ; We transfer all funds left in the pool to the community account.
-        ; Should be 5% + Dust coming from previous rounding errors.
-        (--do-payment id COMMUNITY-ACCOUNT (get-balance (round-account id))))
+          ; We transfer all funds left in the pool to the community account.
+          ; Should be 5% + Dust coming from previous rounding errors.
+          (--do-payment id COMMUNITY-ACCOUNT (round-balance id)))
 
-      ; We pay the Jackpot only if the jackpot-won flag has been set by the
-      ; (compute-result) function.
-      (if (at 'jackpot-won result)
-          (with-capability (JACKPOT-POOL)
-            (--do-payment-jackpot (get-ticket id (first (at 'winning-tickets result)))))
-          false)
+        ; We pay the Jackpot only if the jackpot-won flag has been set by the
+        ; (compute-result) function.
+        (if jackpot-won
+            (with-capability (JACKPOT-POOL)
+              (--do-payment-jackpot (get-ticket id (first winning-tickets))))
+            false))
 
       (update round-table id {'settlement-tx:(tx-hash)})
       (insert result-table id result)
