@@ -1,0 +1,23 @@
+{
+  "name": "bor_lottery_bot",
+  "version": "1.0.0",
+  "description": "$BRO Lottery Management's bot",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build": "esbuild index.js --bundle --platform=node --outfile=dist/lottery_bot.js",
+    "eslint": "eslint index.js utils/*.js"
+  },
+  "dependencies": {
+    "@kadena/client": "^1.11.1",
+    "date-arithmetic": "^4.1.0",
+    "decimal.js": "^10.4.3",
+    "dotenv": "^16.4.5"
+  },
+  "author": "CryptoPascal",
+  "license": "ISC",
+  "devDependencies": {
+    "esbuild": "^0.21.4",
+    "eslint": "8.57.0"
+  }
+}
