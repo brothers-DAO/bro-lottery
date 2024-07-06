@@ -17,7 +17,7 @@ def serialize_int(x):
 def k_hash(x):
     h = hashlib.blake2b(digest_size=32)
     h.update(x.encode('ascii'))
-    return int.from_bytes(h.digest())
+    return int.from_bytes(h.digest(), "big")
 
 def dedup(tickets_it):
     seen = set()
