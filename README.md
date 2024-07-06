@@ -58,15 +58,15 @@ Example for the first round in case of 200 tickets sold at 0.01 $BRO, and the fi
 ## Entropy / Seed Generation
 The Draw Seed is defined as:
 
-Seed = Internal Seed ⊕ External Seed
+Seed = Intrinsic Seed ⊕ Extrinsic Seed
 
-Internal Seed is:
+Intrinsic Seed is:
 Blake2( *TXIDn* || Blake2( *TXIDn-1* || ( Blake2 (*TXIDn-2* || ........*TXID_init*))))
 
 Where *TXIDn* is the TXid of the transaction where the Ticket n was bought.
 
-External Seed is:
-The SHA256 hash of the **FIRST** Bitcoin block which meets the following conditions:
+Extrinsic Seed is:
+The SHA256 hash of the **FIRST** Bitcoin block that meets the following conditions:
   - Block height >= Target Height
   - Block Timestamp >= Target Timestamp
   - Confirmed by at least another block.
@@ -76,7 +76,7 @@ where:
    - Target Timestamp = end-date + 2 hours
 
 ## Draw
-The Smart contracts draws 16 potential winning tickets:
+The Smart contract draws 16 potential winning tickets:
 
 1st = Blake2(Seed ⊕ 1) modulo N
 
