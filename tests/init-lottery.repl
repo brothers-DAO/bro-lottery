@@ -2,6 +2,8 @@
 (load "kadena_repl_sandbox/kda-env/init.repl")
 
 (begin-tx)
+(define-namespace "BTC_ORACLE_NS" basic-guards.GUARD_SUCCESS basic-guards.GUARD_SUCCESS)
+(namespace "BTC_ORACLE_NS")
 (load "stubs/btc-oracle.pact")
 (commit-tx)
 

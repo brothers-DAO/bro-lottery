@@ -281,7 +281,7 @@
           'tickets-count:0,
           'tickets-limit:tickets-limit,
           'inner-seed:(tx-hash),
-          'btc-height: (btc_oracle_mod.est-btc-height-at-time end-time),
+          'btc-height: (BTC_ORACLE_NS.btc_oracle_mod.est-btc-height-at-time end-time),
           'settlement-tx:""
           })
         (update current-table "" {'round-id:id})
@@ -365,7 +365,7 @@
               'tickets-count:=cnt,
               'end-time:=end-time,
               'btc-height:=min-height}
-      (bind (btc_oracle_mod.select-block min-height (add-time end-time (hours 2)) 1)
+      (bind (BTC_ORACLE_NS.btc_oracle_mod.select-block min-height (add-time end-time (hours 2)) 1)
         {'header-hash:=o-seed,
          'height:=selected-height}
         (let* ((seed (xor o-seed (str-to-int 64 i-seed)))
