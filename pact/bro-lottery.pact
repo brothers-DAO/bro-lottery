@@ -194,6 +194,9 @@
   (defun round-balance:decimal (id:string)
     (get-balance (round-account id)))
 
+  (defun floor-bro:decimal (x:decimal)
+    (floor x (precision)))
+
   ;-----------------------------------------------------------------------------
   ; UTILS (for internal use)
   ;-----------------------------------------------------------------------------
@@ -387,14 +390,14 @@
   ;-----------------------------------------------------------------------------
   (defun --do-payment:bool (round-id:string account:string amount:decimal)
     (install-capability (TRANSFER (round-account round-id) account 100.0))
-    (transfer (round-account round-id) account (floor amount 12))
+    (transfer (round-account round-id) account (floor-bro amount))
     true
   )
 
   (defun --do-payment-jackpot:bool (ticket:object{ticket})
     (install-capability (TRANSFER JACKPOT-ACCOUNT (at 'account ticket) 100.0))
     (transfer JACKPOT-ACCOUNT (at 'account ticket)
-              (floor (* JACKPOT-WIN-RATIO (jackpot-balance)) 12))
+              (floor-bro (* JACKPOT-WIN-RATIO (jackpot-balance))))
     true
   )
 
