@@ -1,13 +1,20 @@
 # BRO Lottery
 
-## Rules (For the first round)
+## Modules (chain 2)
+- Main module: `n_e47192edb40ff014ab9c82ae42972d09bbad4316.bro-lottery`
+- Helpers modules : `n_e47192edb40ff014ab9c82ae42972d09bbad4316.bro-lottery-helpers`
 
-Draft : **Request for comments**
+## Accounts (chain 2)
+- Sales (Deposit account) in $BRO: `c:SW1jyng-6fFDJW_sOTN5JV2T-fkn2NZJkZK2c3Sqgv8`
+- Jackpot account in $BRO: `c:gCT8JcKDsYGG8RznKEdm_Lpu-dacVrbM9cAsBK3DGww`
+
+
+## Rules
 
 The round duration is 7 days. Its not possible to buy a ticket after the end-date.
 
 Each participant buy a ticket, either:
-   - **TBD** per round. But probably at first 0.001 $BRO = 1 GiDoug
+   - 0.001 $BRO per round = 1 GiDoug
    - The corresponding amount in KDA (swapped automatically on EckoDEX)
    - The corresponding amount in zUSD(swapped automatically on EckoDEX)
 
