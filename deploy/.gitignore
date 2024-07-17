@@ -1,0 +1,4 @@
+keys/*
+.pact
+tx*.yaml
+tx*.json

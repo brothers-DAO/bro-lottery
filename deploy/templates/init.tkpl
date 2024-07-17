@@ -1,0 +1,54 @@
+code: |
+  (define-namespace "{{ns}}" (read-keyset 'ns-ks) (read-keyset 'ns-ks))
+  (namespace "{{ns}}")
+
+  ; => This is the general governance keyset
+  (define-keyset "{{ns}}.admin" (read-keyset 'admin-ks))
+
+  ; => This is the gas keyset
+  (define-keyset "{{ns}}.gas" (read-keyset 'gas-ks))
+
+  ; => This is the op
+  (define-keyset "{{ns}}.op" (read-keyset 'op-ks))
+
+  ; Create an account for the gas
+  (coin.create-account "r:{{ns}}.gas" (keyset-ref-guard "{{ns}}.gas"))
+
+data:
+  ns-ks:
+    - {{ns-key}}
+
+  # A single key for now
+  admin-ks:
+    - {{admin-key-1}}
+
+  gas-ks:
+    pred: keys-any
+    keys:
+      - {{gas-key-1}}
+      - {{gas-key-2}}
+      - {{admin-key-1}}
+
+  op-ks:
+    pred: keys-any
+    keys:
+      - {{op-key-1}}
+      - {{op-key-2}}
+      - {{admin-key-1}}
+
+publicMeta:
+  chainId: "{{chain}}"
+  sender: {{gas-payer}}
+  gasLimit: 2000
+  gasPrice: 0.00000001
+  ttl: 7200
+
+networkId: {{network}}
+signers:
+  - public: {{ns-key}}
+    caps: []
+  - public: {{gas-payer-key}}
+    caps:
+      - name: coin.GAS
+        args: []
+type: exec
