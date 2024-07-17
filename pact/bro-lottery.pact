@@ -142,7 +142,7 @@
   (defconst WINNINGS-RATIO [0.5 0.25 0.15])
 
   ; Fee ratio of the main pool
-  (defconst FEE-RATIO 0.05)
+  (defconst FEE-RATIOS [0.05])
 
   ; When a Jackpot is won, only 80% is paid, the remaining stays for the next round
   (defconst JACKPOT-WIN-RATIO 0.8)
@@ -153,8 +153,8 @@
   ; Output account in case of forced wtihdrawal of the Jackpot
   (defconst JACKPOT-WITHDRAWAL-ACCOUNT "r:BRO_NS.community")
 
-  ; Output account to pay fees
-  (defconst FEE-ACCOUNT "FEE_ACCOUNT")
+  ; Output accounts to pay fees
+  (defconst FEE-ACCOUNTS ["FEE_ACCOUNT_1"])
 
   ; Output account to pay community fees
   (defconst COMMUNITY-ACCOUNT "r:BRO_NS.community")
@@ -413,7 +413,8 @@
           (zip (--do-payment id) (map (compose (get-ticket id) (at 'account)) winning-tickets)
                                  (map (* total) WINNINGS-RATIO))
           ; We pay the 5% fees
-          (--do-payment id FEE-ACCOUNT (* total FEE-RATIO))
+          (zip (--do-payment id) FEE-ACCOUNTS
+                                 (map (* total) FEE-RATIOS))
 
           ; We transfer all funds left in the pool to the community account.
           ; Should be 5% + Dust coming from previous rounding errors.
@@ -436,17 +437,20 @@
   ;-----------------------------------------------------------------------------
   ; ADMINISTRATIVE FUNCTIONS
   ;-----------------------------------------------------------------------------
+  (defun enforce-admin-accounts ()
+    @doc "Check that admins accounts all exist. Supposed to be called after each module upgrade"
+    (enforce-bro-account-exists JACKPOT-WITHDRAWAL-ACCOUNT)
+    (map (enforce-bro-account-exists) FEE-ACCOUNTS)
+    (enforce-bro-account-exists COMMUNITY-ACCOUNT)
+  )
+
   (defun init ()
     (insert current-table "" {'round-id: ""})
     (insert round-table "" NULL-ROUND)
     (create-account JACKPOT-ACCOUNT JACKPOT-GUARD)
     (create-account TICKET-SALES-ACCOUNT TICKET-SALES-GUARD)
-
     ; Check external accounts => I Don't want to have issues later for payments
-    (enforce-bro-account-exists JACKPOT-WITHDRAWAL-ACCOUNT)
-    (enforce-bro-account-exists FEE-ACCOUNT)
-    (enforce-bro-account-exists COMMUNITY-ACCOUNT)
-
+    (enforce-admin-accounts)
     "Init OK"
   )
 

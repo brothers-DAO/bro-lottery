@@ -134,7 +134,7 @@
 (expect "Bob Balance 9.5 + 1.17 * 0.25 + 1.17 *0.15" 9.968 (get-balance "bob"))
 
 ; Fees account
-(expect "Fees balance 1.17 * 0.05" 0.0585 (get-balance "FEE_ACCOUNT"))
+(expect "Fees balance 1.17 * 0.05" 0.0585 (get-balance "FEE_ACCOUNT_1"))
 
 ; Community account
 (expect "Community balance 1.17 * 0.05" 0.0585 (get-balance "r:BRO_NS.community"))
@@ -219,7 +219,7 @@
 (expect "Carol Balance 8.7 + 0.9 * (0.5 + 0.25 + 0.15) + 0.8 *0.23"  9.694 (get-balance "carol"))
 
 ; Fees account
-(expect "Fees balance 0.0585 + 0.9 * 0.05 " 0.1035 (get-balance "FEE_ACCOUNT"))
+(expect "Fees balance 0.0585 + 0.9 * 0.05 " 0.1035 (get-balance "FEE_ACCOUNT_1"))
 
 ; Community account
 (expect "Community balance 0.0585 + 0.9 * 0.05" 0.1035 (get-balance "r:BRO_NS.community"))

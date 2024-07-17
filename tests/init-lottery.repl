@@ -29,7 +29,7 @@
 (begin-tx)
 (env-data {'f-ks:["fee-key"], 'c-ks:["community-key"]})
 (namespace "BRO_NS")
-(bro.create-account "FEE_ACCOUNT" (read-keyset 'f-ks))
+(bro.create-account "FEE_ACCOUNT_1" (read-keyset 'f-ks))
 (define-keyset "BRO_NS.community" (read-keyset 'c-ks))
 (bro.create-account (create-principal (keyset-ref-guard "BRO_NS.community")) (keyset-ref-guard "BRO_NS.community"))
 (commit-tx)
