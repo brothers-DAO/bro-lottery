@@ -4,7 +4,7 @@ all: yaml
 
 .SECONDARY:
 
-yaml: tx_sha256.yaml tx_btc-oracle.yaml tx_bro-lottery.yaml tx_bro-lottery-helpers.yaml tx_init.yaml
+yaml: tx_rotate.yaml tx_sha256.yaml tx_btc-oracle.yaml tx_bro-lottery.yaml tx_bro-lottery-helpers.yaml tx_init.yaml
 
 .pact:
 	mkdir -p .pact
@@ -14,6 +14,10 @@ yaml: tx_sha256.yaml tx_btc-oracle.yaml tx_bro-lottery.yaml tx_bro-lottery-helpe
 
 tx_init.yaml: templates/init.tkpl ${DATA_FILE}
 	kda gen -t $< -d ${DATA_FILE} -o $@
+
+tx_rotate.yaml: templates/rotate.tkpl ${DATA_FILE}
+	kda gen -t $< -d ${DATA_FILE} -o $@
+
 
 tx_%.yaml: templates/%.tkpl .pact/%.pact ${DATA_FILE}
 	kda gen -t $< -d ${DATA_FILE} -o $@

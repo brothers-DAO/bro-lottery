@@ -1,0 +1,33 @@
+code: |
+  (define-namespace "{{ns}}" (read-keyset 'new-ks) (read-keyset 'new-ks))
+  (namespace "{{ns}}")
+
+  (define-keyset "{{ns}}.admin" (read-keyset 'new-ks))
+
+data:
+  new-ks:
+    pred: keys-2
+    keys:
+      - {{admin-key-1}}
+      - {{admin-key-2}}
+      - {{admin-key-3}}
+
+
+publicMeta:
+  chainId: "{{chain}}"
+  sender: {{gas-payer}}
+  gasLimit: 1000
+  gasPrice: 0.00000001
+  ttl: 7200
+
+networkId: {{network}}
+signers:
+  - public: {{ns-key}}
+    caps: []
+  - public: {{admin-key-1}}
+    caps: []
+  - public: {{gas-payer-key}}
+    caps:
+      - name: coin.GAS
+        args: []
+type: exec
