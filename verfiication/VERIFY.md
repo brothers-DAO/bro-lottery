@@ -20,7 +20,7 @@ The result of a draw can be verified:
 
 5 - Deduplicate the 16 "Virtual winning tickets", and take the 3 firsts: **You have a 3 winning tickets rank**
 
-6 - Compute Blake2 (seed XOR `rank`) Modulo 10: **You have the Lucky Star Number**
+6 - Compute Blake2 (seed XOR `888`) Modulo 10: **You have the Lucky Star Number**
   - *Note: before hashing, the integer must be serialized following Pact Rules*
 
 ---
