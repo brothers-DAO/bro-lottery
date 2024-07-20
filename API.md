@@ -71,8 +71,8 @@ Each round is reference by a unique 8 bytes ID, computed at creation.
     tickets-count:integer ; Number of sold tickets, automatically incremented
     tickets-limit:integer ; Limits of tickets being sold for this round
     inner-seed:string ; Internal seed (see doc), automatically updated by each sale
-    btc-height:integer ; The minimum BTC height for retriving the external seed
-    settlement-tx:string ; Hash of th settlement TX: empty is not settled
+    btc-height:integer ; The minimum BTC height for retrieving the external seed
+    settlement-tx:string ; Hash of the settlement TX: empty is not settled
   )
 ```
 
@@ -83,8 +83,8 @@ This object is created and stored when the round is settled.
 ```pact
   (defschema lottery-result
     inner-seed:integer ; Copy of the internal seed of the round
-    btc-height:integer ; BTC heigt used for the external seed
-    seed:integer ; Seed used for comupting the results (Internal seed XOR external seed)
+    btc-height:integer ; BTC height used for the external seed
+    seed:integer ; Seed used for computing the results (Internal seed XOR external seed)
     star-number:integer ; Drawn STAR Number
     winning-tickets:[integer] ; Drawn winning tickets
     final-round-bal:decimal ; Final balance of the main pool
@@ -99,7 +99,7 @@ This object is created and stored when the round is settled.
   round-id:string ; Round-id linked to this ticket
   rank:integer ; Rank of the ticket in the round
   account:string ; Account to pay the winnings
-  star-number:integer ; STAR Number choosen by the user
+  star-number:integer ; STAR Number chosen by the user
 )
 ```
 
