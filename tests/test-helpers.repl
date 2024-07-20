@@ -130,9 +130,52 @@
 (buy-ticket-in-fungible basic "alice" 21.0 8)
 
 ; Check the ticket
-(expect-that "Ticket 21 star-number" (compose (at 'star-number) (= 8)) (bro_lottery_mod.get-ticket "024Cy43n" 22))
+(expect-that "Ticket 22 star-number" (compose (at 'star-number) (= 8)) (bro_lottery_mod.get-ticket "024Cy43n" 22))
 
 ; Check Alice acount
 (expect-that "Alice account should be a little bit less than 19980.0" (between 19979.0 19980.0) (basic.get-balance "alice"))
 
+(commit-tx)
+
+
+
+; Buy a batch of tickets in KDA (5 tickets)
+(begin-tx)
+(use free.util-math)
+(use bro_lottery_helpers_mod)
+(env-chain-data {'block-time: (time "2024-06-06T00:00:00Z")})
+(print (format "5 - Tickets prices in KDA:{}" [(ticket-price-in-kda-batch 5)]))
+(expect-that "Ticket price between 1.1 and 1.2 x5" (between 5.5 6.0) (ticket-price-in-kda-batch 5))
+; We check that 5 tickets is more expensive than a single one
+(expect-that "5 tickets is mor expensive than 1" (<= (* 5.0 (ticket-price-in-kda)))  (ticket-price-in-kda-batch 5))
+
+(env-sigs [{'key:"alice-key", 'caps:[(coin.TRANSFER "alice" (sales-account-in-kda) (ticket-price-in-kda-batch 5))]}])
+
+(buy-ticket-in-kda-batch "alice" 5 (ticket-price-in-kda-batch 5) [0 1 2 3 4])
+
+; Check a couple of tickets
+(expect-that "Ticket 23 star-number" (compose (at 'star-number) (= 0)) (bro_lottery_mod.get-ticket "024Cy43n" 23))
+(expect-that "Ticket 24 star-number" (compose (at 'star-number) (= 1)) (bro_lottery_mod.get-ticket "024Cy43n" 24))
+(expect-that "Ticket 25 star-number" (compose (at 'star-number) (= 2)) (bro_lottery_mod.get-ticket "024Cy43n" 25))
+(commit-tx)
+
+
+; Buy a batch of tickets in Basic (5 tickets)
+(begin-tx)
+(use free.util-math)
+(use bro_lottery_helpers_mod)
+(env-chain-data {'block-time: (time "2024-06-07T00:00:00Z")})
+(print (format "5 - Tickets prices in Basic:{}" [(ticket-price-in-fungible-batch basic 5)]))
+(expect-that "Ticket price between 20.0 and 30.0 x5" (between 100.0 150.0) (ticket-price-in-fungible-batch basic 5))
+; We check that 5 tickets is more expensive than a single one
+(expect-that "5 tickets is mor expensive than 1" (<= (* 5.0 (ticket-price-in-fungible basic)))  (ticket-price-in-fungible-batch basic 5))
+
+(env-sigs [{'key:"alice-key", 'caps:[(basic.TRANSFER "alice" (sales-account-in-fungible basic) (ticket-price-in-fungible-batch basic 5))]}])
+
+(buy-ticket-in-fungible-batch basic "alice" 5 (ticket-price-in-fungible-batch basic 5) [6 7 8 9 0])
+
+; Check a couple of tickets
+(expect-that "Ticket 28 star-number" (compose (at 'star-number) (= 6)) (bro_lottery_mod.get-ticket "024Cy43n" 28))
+(expect-that "Ticket 29 star-number" (compose (at 'star-number) (= 7)) (bro_lottery_mod.get-ticket "024Cy43n" 29))
+(expect-that "Ticket 30 star-number" (compose (at 'star-number) (= 8)) (bro_lottery_mod.get-ticket "024Cy43n" 30))
 (commit-tx)

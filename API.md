@@ -38,6 +38,26 @@ The transaction must be signed with the cap `(xxx.TRANSFER account sales-account
 
 *sales-account* being the account retrieved in 2 .
 
+#### Purchase in batch
+It's possible to purchase tickets in Batch. According to expected gas usage, should be limited to 30 / transaction.
+
+In $BRO:
+  - ```(buy-ticket-in-bro-batch account count star-numbers)```
+
+In KDA:
+  - ```(ticket-price-in-kda-batch count)``` => Retrieve the total price in KDA for a given batch size.
+  - ```(buy-ticket-in-kda-batch account count max-amount star-numbers)``` => Buy tickets in Batch in KDA
+
+In Fungible:
+  - ```(ticket-price-in-fungible-batch f count)``` => Retrieve the total price in another Fungible `f` for a given batch size.
+  - ```(buy-ticket-in-fungible-batch account count max-amount star-numbers)``` => Buy tickets in Batch in another fungible `f`
+
+Tickets price are always returned for the whole batch. And because of slippage, the unary price of a ticket is expected higher than a single ticket.
+
+`star-numbers` is an array of decimal expected to have a length `count`.
+
+
+
 
 ### Using the core module (low-level)
 
