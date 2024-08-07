@@ -98,3 +98,8 @@ The Smart contract draws 16 potential winning tickets:
 After removing duplicates, the 3 first tickets are designed as the 1st, 2nd and 3rd prize. This method prevents a single ticket for winning several prizes.
 
 Star Number = Blake2(Seed ⊕ 888) modulo 10
+
+## Licensing
+ - Files under `/pact` (smart contracts) are licensed under Business Source License 1.1 (`BUSL-1.1`), see `LICENSE`.
+ - Files under `/lottery-bot` are licensed under BSD License 2.0  (`BSD-3-Clause`)
+ - Files under `/tests`, `/deploy` remains unlicensed  
