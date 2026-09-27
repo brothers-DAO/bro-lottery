@@ -273,12 +273,72 @@
 (expect "Round State in starting" "STARTING" (round-state))
 (commit-tx)
 
+; We check the UNCLAIMED case
+; ---------------------------------------------
+(begin-tx)
+(use bro_lottery_mod)
+(env-hash (hash "Create Round Transaction 5"))
+(env-chain-data {'block-time: (time "2025-06-22T00:00:00Z")})
+
+(expect "Sanity check for Jackpot balance" 0.0 (jackpot-balance))
+
+; Create a round for 7 days
+(env-sigs [{'key:"op", 'caps:[(bro_lottery_mod.CREATE-ROUND)]}])
+(create-round 0.1 100 (time "2025-06-29T00:00:00Z") )
+(print (format "Current Round ID: {}" [(at 'id (current-round))]))
+
+(expect "Round State in starting" "STARTING" (round-state))
+(commit-tx)
+
+
+; Alice buy 5 tickets
+(begin-tx)
+(use bro_lottery_mod)
+(env-hash (hash "Alice Buy"))
+(env-chain-data {'block-time: (time "2025-06-23T00:00:00Z")})
+
+(expect "Round State in running" "RUNNING" (round-state))
+
+(env-sigs [{'key:"alice-key", 'caps:[(BRO_NS.bro.TRANSFER "alice" TICKET-SALES-ACCOUNT 0.5)]}])
+(BRO_NS.bro.transfer "alice" TICKET-SALES-ACCOUNT 0.5)
+
+(buy-ticket "alice" 5) ; Ticket 0
+(buy-ticket "alice" 4) ; Ticket 1
+(buy-ticket "alice" 3) ; Ticket 2
+(buy-ticket "alice" 2) ; Ticket 3
+(buy-ticket "alice" 1) ; Ticket 4
+
+(commit-tx)
+
+; Try to end with "Unclaimed function" before 1 month
+(begin-tx)
+(use bro_lottery_mod)
+(env-chain-data {'block-time: (time "2025-07-02T00:00:00Z")})
+(expect-failure "Still in normal ended state" "Current round is not UNCLAIMED" (settle-round-unclaimed))
+(commit-tx)
+
+
+
+; The Round is ended by calling unclaimed after 1 month
+(begin-tx)
+(use bro_lottery_mod)
+(env-hash (hash "End Round 5"))
+(env-chain-data {'block-time: (time "2025-08-30T00:00:00Z")})
+(expect "Round State in Unclaimed" "UNCLAIMED" (round-state))
+
+(settle-round-unclaimed)
+
+(expect "Round State in Settled" "SETTLED" (round-state))
+; Verify that everything went to Jackpot
+(expect "5 tickets to Jackpot" 0.5 (jackpot-balance))
+(commit-tx)
+
 ; test the function Get-all-round
 (begin-tx)
 (use bro_lottery_mod)
 (use free.util-lists)
-(expect-that "4 rounds" (compose (length) (= 4)) (get-all-rounds))
-(expect-that "Reverse ordered rounds" (compose (compose (first) (at 'end-time)) (= (time "2024-07-05T00:00:00Z")))
+(expect-that "4 rounds" (compose (length) (= 5)) (get-all-rounds))
+(expect-that "Reverse ordered rounds" (compose (compose (first) (at 'end-time)) (= (time "2025-06-29T00:00:00Z")))
                                       (get-all-rounds))
 
 (commit-tx)

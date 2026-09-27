@@ -78,6 +78,16 @@
     jackpot-won:bool ; Whether the Jackpot was won
   )
 
+  (defconst NULL-RESULT:object{lottery-result}
+    {'inner-seed:-1,
+     'btc-height:-1,
+     'seed:-1,
+     'star-number:-1,
+     'winning-tickets:[],
+     'final-round-bal: 0.0,
+     'final-jackpot-bal: 0.0,
+     'jackpot-won:false})
+
   (deftable result-table:{lottery-result})
 
   ; A small table to only store the current round
@@ -98,11 +108,14 @@
   ;-----------------------------------------------------------------------------
   ; STATES MANAGEMENT
   ;-----------------------------------------------------------------------------
+  ; After this delay, prizes are considered as unclaimed
+  (defconst UNCLAIM-DELAY (days 31))
 
   ; A round goes through different states:
   ;   - STARTING => Before the start-date (transient state)
   ;   - RUNNING => Between start-date and end-date (Tickets can be sold)
   ;   - ENDED => Tickets sales are ended, we are waiting for a BTC Block that meets pre-conditions
+  ;   - UNCLAIMED => Never settled after 1 month, funds must be sent to the jackpot.
   ;   - SETTLED => The (settle) function has been called, prizes payment have been done.
   ; Special case: when a round has ended without any ticket sold, we consider it as already SETTLED
     (defun round-state:string ()
@@ -112,6 +125,7 @@
         (cond
           ((!= "" settled) "SETTLED")
           ((and (= cnt 0) (is-past end-time)) "SETTLED")
+          ((is-past (add-time end-time UNCLAIM-DELAY)) "UNCLAIMED")
           ((is-past end-time) "ENDED")
           ((is-past start-time) "RUNNING")
           "STARTING"))
@@ -462,6 +476,22 @@
       (format "Round Settled for {}" [id]))
   )
 
+  (defun settle-round-unclaimed:string ()
+    @doc "Settle a round in unclaimed state"
+    (enforce-round-state "UNCLAIMED")
+    ; After the round claiming period, we transfer all the funds to the jackpot
+
+    (let ((id (current-round-id)))
+      (insert result-table id (+ {'final-round-bal: (round-balance id),
+                                  'final-jackpot-bal: (jackpot-balance)} NULL-RESULT))
+
+      (with-capability (ROUND-MAIN-POOL id)
+        (--do-payment id JACKPOT-ACCOUNT (round-balance id)))
+
+      (update round-table id {'settlement-tx:(tx-hash)})
+
+      (format "Round Settled (Unclaimed) for {}" [id]))
+  )
 
   ;-----------------------------------------------------------------------------
   ; ADMINISTRATIVE FUNCTIONS
