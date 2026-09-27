@@ -168,6 +168,15 @@
 
   (defconst TICKET-SALES-ACCOUNT (create-principal TICKET-SALES-GUARD))
 
+  (defcap TICKET-ACCOUNT:bool (round-id:string rank:integer)
+    true)
+
+  (defun ticket-account-guard:guard (round-id:string rank:integer)
+    (create-capability-guard (TICKET-ACCOUNT round-id rank)))
+
+  (defun ticket-account:string (round-id:string rank:integer)
+    (create-principal (ticket-account-guard round-id rank)))
+
   ; --------
   ; Jackpot account
   (defcap JACKPOT-POOL:bool ()
@@ -318,12 +327,17 @@
 
       ; We transfer one part of the TICKET-SALES to the main pool, the other part to the
       ; jackpot pool
-      (install-capability (TRANSFER TICKET-SALES-ACCOUNT (round-account round-id) 100.0))
-      (install-capability (TRANSFER TICKET-SALES-ACCOUNT JACKPOT-ACCOUNT 100.0))
+      (let ((t-account (ticket-account round-id cnt) ))
+        (install-capability (TRANSFER TICKET-SALES-ACCOUNT t-account price))
+        (install-capability (TRANSFER t-account (round-account round-id) (* price MAIN-POOL-RATIO)))
+        (install-capability (TRANSFER t-account JACKPOT-ACCOUNT (* price JACKPOT-POOL-RATIO)))
 
-      (with-capability (TICKET-SALES)
-        (transfer TICKET-SALES-ACCOUNT (round-account round-id) (* price MAIN-POOL-RATIO))
-        (transfer TICKET-SALES-ACCOUNT JACKPOT-ACCOUNT (* price JACKPOT-POOL-RATIO)))
+        (with-capability (TICKET-SALES)
+          (transfer-create TICKET-SALES-ACCOUNT t-account (ticket-account-guard round-id cnt) price))
+
+        (with-capability (TICKET-ACCOUNT round-id cnt)
+          (transfer t-account (round-account round-id) (* price MAIN-POOL-RATIO))
+          (transfer t-account JACKPOT-ACCOUNT (* price JACKPOT-POOL-RATIO))))
 
       ; Create the ticket
       (insert ticket-table (create-ticket-id round-id cnt)
@@ -394,6 +408,21 @@
     true
   )
 
+  (defun --do-payment-ticket:bool (round-id:string ticket:object{ticket} amount:decimal)
+    (bind ticket {'account:= account, 'rank:= rank}
+      (let ((r-account (round-account round-id))
+            (t-account (ticket-account round-id rank) )
+            (amt (floor-bro amount)))
+        (install-capability (TRANSFER r-account t-account amt))
+        (install-capability (TRANSFER t-account account amt))
+
+        (transfer r-account t-account amt)
+
+        (with-capability (TICKET-ACCOUNT round-id rank)
+          (transfer t-account account amt))))
+    true
+  )
+
   (defun --do-payment-jackpot:bool (ticket:object{ticket})
     (install-capability (TRANSFER JACKPOT-ACCOUNT (at 'account ticket) 100.0))
     (transfer JACKPOT-ACCOUNT (at 'account ticket)
@@ -410,8 +439,8 @@
 
         (with-capability (ROUND-MAIN-POOL id)
           ; We pay the 3 winners
-          (zip (--do-payment id) (map (compose (get-ticket id) (at 'account)) winning-tickets)
-                                 (map (* total) WINNINGS-RATIO))
+          (zip (--do-payment-ticket id) (map (get-ticket id) winning-tickets)
+                                        (map (* total) WINNINGS-RATIO))
           ; We pay the 5% fees
           (zip (--do-payment id) FEE-ACCOUNTS
                                  (map (* total) FEE-RATIOS))
