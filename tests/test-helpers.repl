@@ -10,12 +10,11 @@
 (basic.mint "carol" (read-keyset 'c-ks) 20000.0)
 (commit-tx)
 
-(env-exec-config ["DisableRuntimeReturnTypeChecking"])
+(env-exec-config ["DisableRuntimeRTC"])
 (begin-tx)
 (DEX_NS.exchange.create-pair coin BRO_NS.bro "")
 (DEX_NS.exchange.create-pair coin basic"")
 (commit-tx)
-(env-exec-config)
 
 (begin-tx)
 (env-data {'ks:["carol-key"]})

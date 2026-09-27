@@ -31,7 +31,7 @@
     @event
     true)
 
-  (defcap SETTLED (result:object:{lottery-result})
+  (defcap SETTLED (result:object{lottery-result})
     @event
     true)
 
