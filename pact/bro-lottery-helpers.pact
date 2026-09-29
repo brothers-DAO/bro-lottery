@@ -2,8 +2,8 @@
   (use bro_lottery_mod)
   (use DEX_NS.exchange)
 
-  (defcap GOVERNANCE ()
-    true)
+  (defcap GOVERNANCE()
+    (enforce-keyset "LOTTERY_NS.admin"))
 
   (defun tickets-for-sale: bool()
     @doc "Return true if the lottery is running"
